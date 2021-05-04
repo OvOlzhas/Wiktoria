@@ -227,7 +227,7 @@ _(Cсылка должна начинаться как https://en.wikipedia.org/
         
         conn = sqlite3.connect('database.db')
         cur = conn.cursor()
-        check_user(message.from_user.id, message.from_user.first_name)
+        check_user(cur, conn, message.from_user.id, message.from_user.first_name)
         conn.close()
 
 
