@@ -114,7 +114,7 @@ def save_content(user_id, user_name, url, NAME, TOP):
                     SET last_text_name="{NAME}", top="{TOP}", last_url="{url}"
                     WHERE user_id={user_id}''')
     
-    cur.execute(f'''SELECT *
+    cur.execute(f'''SELECT count, name
                     FROM wiki
                     WHERE name="{NAME}"''')
     row = cur.fetchall()
@@ -122,7 +122,7 @@ def save_content(user_id, user_name, url, NAME, TOP):
         add_wiki(cur, conn, NAME)
     else:
         cur.execute(f'''UPDATE wiki
-                        SET count={row[0].count + 1}
+                        SET count={row[0][0] + 1}
                         WHERE name="{NAME}"''')
     conn.commit()
     conn.close()
