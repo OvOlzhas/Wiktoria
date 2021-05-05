@@ -278,7 +278,13 @@ def callback_query(call):
     # Отправка текста без первого абзаца
     bot.answer_callback_query(call.id)
     for x in range(0, len(TEXT), 4096): # 4096 - макс. количество символов в одном сообщение
-        bot.send_message(call.from_user.id, TEXT[x:x+4096])
+        if x + 4096 >= len(TEXT):
+            markup = telebot.types.InlineKeyboardMarkup()
+            button = telebot.types.InlineKeyboardButton("Top 5 words", callback_data="TopWords")
+            markup.add(button)
+            bot.send_message(call.from_user.id, TEXT[x:x+4096], reply_markup=markup)
+        else:
+            bot.send_message(call.from_user.id, TEXT[x:x+4096])
     conn.close()
 
 
@@ -304,9 +310,11 @@ def get_command(message):
 _(Cсылка должна начинаться как https://en.wikipedia.org/wiki/)_    
 2. *LastTop* - Вывод пяти наиболее встречаемых слов     
 3. *LastWiki* - Вывод названия последнего текста      
-4. *TopWiki* - Вывод названии, 5 наиболее запрашиваемых статьей'''
+4. *TopWiki* - Вывод названии, 5 наиболее запрашиваемых статьей      
+Эти команды не обязательно писать так, как написано выше.       
+Допустима команда на подобии: *lAsTwIkI*'''
         if message.text == "/start":
-            mess = "Привет!     " + mess
+            mess = f"Привет, {message.from_user.first_name}!     " + mess
         bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
         
         conn = sqlite3.connect('database.db')
