@@ -328,6 +328,8 @@ _(Cсылка должна начинаться как https://en.wikipedia.org/
         cur = conn.cursor()
         (NAME, url, TOP) = get_user_content(cur, conn, message)
 
+        if len(NAME) == 0:
+            NAME = "Еще не была введена ни одна статья."
         bot.send_message(message.from_user.id, NAME)
         conn.close()
     elif message.text == "/topwiki":
