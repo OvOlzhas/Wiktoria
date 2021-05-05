@@ -263,7 +263,7 @@ def callback_query(call):
     (NAME, url, TOP) = get_user_content(cur, conn, call)
     
     html = get_html(url, call)
-    NAME, TEXT = get_content(html.text)
+    NAME, TEXT = get_content(html.text, call)
     
     # Удаляется первый абзац
     ok = False
