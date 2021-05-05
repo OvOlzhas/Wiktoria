@@ -298,19 +298,19 @@ def callback_query(call):
     print_top(call)
 
 
-@bot.message_handler(commands=["start", "help"])
+@bot.message_handler(commands=["start", "help", "LastTop", "LastWiki", "TopWiki"])
 def get_command(message):
     """
-    Обрабатываются команды /start и /help.
+    Обрабатываются команды /start, /help,  /LastTop, /LastWiki и /TopWiki.
     """
     if message.text == "/help" or message.text == "/start":
         mess = '''
 Доступные тебе команды:    
 1. *GetText <Ссылка на статью из Википедию>* - Вывод текста из Википедии    
 _(Cсылка должна начинаться как https://en.wikipedia.org/wiki/)_    
-2. *LastTop* - Вывод пяти наиболее встречаемых слов     
-3. *LastWiki* - Вывод названия последнего текста      
-4. *TopWiki* - Вывод названии, 5 наиболее запрашиваемых статьей      
+2. *LastTop* or */LastTop* - Вывод пяти наиболее встречаемых слов     
+3. *LastWiki* or */LastWiki* - Вывод названия последнего текста      
+4. *TopWiki* or */TopWiki* - Вывод названии 5 наиболее запрашиваемых статьей      
 Эти команды не обязательно писать так, как написано выше.       
 Допустима команда на подобии: *lAsTwIkI*'''
         if message.text == "/start":
@@ -320,6 +320,23 @@ _(Cсылка должна начинаться как https://en.wikipedia.org/
         conn = sqlite3.connect('database.db')
         cur = conn.cursor()
         check_user(cur, conn, message.from_user.id, message.from_user.first_name)
+        conn.close()
+    elif message.text.lower() == "/lasttop":
+        # Введено LastTop
+        print_top(message)
+    elif message.text.lower() == "/lastwiki":
+        # Введено LastWiki
+        conn = sqlite3.connect('database.db')
+        cur = conn.cursor()
+        (NAME, url, TOP) = get_user_content(cur, conn, message)
+
+        bot.send_message(message.from_user.id, NAME)
+        conn.close()
+    elif message.text.lower() == "/topwiki":
+        # Введено TopWiki
+        conn = sqlite3.connect('database.db')
+        cur = conn.cursor()
+        bot.send_message(message.from_user.id, get_top_wiki(cur, conn, message))
         conn.close()
 
 
@@ -336,23 +353,9 @@ def get_text_messages(message):
         TOP = top_words(TEXT)
         print_text(message, NAME, TEXT)
         save_content(message.from_user.id, message.from_user.first_name, words[1], NAME, TOP)
-    elif words[0].lower() == "lasttop":
-        # Введено LastTop
-        print_top(message)
-    elif words[0].lower() == "lastwiki":
-        # Введено LastWiki
-        conn = sqlite3.connect('database.db')
-        cur = conn.cursor()
-        (NAME, url, TOP) = get_user_content(cur, conn, message)
-
-        bot.send_message(message.from_user.id, NAME)
-        conn.close()
-    elif words[0].lower() == "topwiki":
-        # Введено TopWiki
-        conn = sqlite3.connect('database.db')
-        cur = conn.cursor()
-        bot.send_message(message.from_user.id, get_top_wiki(cur, conn, message))
-        conn.close()
+    elif words[0].lower() in ["lasttop", "lastwiki", "topwiki"]:
+        message.text = '/' + words[0].lower()
+        get_command(message)
     else:
         # Неизвестная команда
         bot.send_message(message.from_user.id, "Я тебя не понимаю. Напиши /help.")
