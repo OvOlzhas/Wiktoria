@@ -40,10 +40,10 @@ def get_content(html, message):
     TEXT = ""
     soup = BeautifulSoup(html, 'lxml')
     body = soup.find("div", class_="mw-parser-output")
-    if body == None:
+    if body == None: # Проверка на существование текста
         bot.send_message(message.from_user.id, "Ссылка не корректна.")
         sys.exit()
-    NAME = soup.find("h1", id="firstHeading").get_text()
+    NAME = soup.find("h1", id="firstHeading").get_text() # Берется заголовок
     texts_p = body.find_all('p')
     texts_span = body.find_all('span', class_="mw-headline")
     # Удаляются table из html
@@ -133,14 +133,12 @@ def get_top_wiki(cur, conn, message):
                     FROM wiki''')
     WTOP = ""
     wikies = []
-    for wiki in cur.fetchall():
+    for wiki in cur.fetchall(): # Берутся все статьи
         wikies.append(wiki)
     wikies.sort()
     wikies.reverse()
-    for (i, wiki) in zip(range(5), wikies):
-        WTOP += str(i + 1) + ". " + wiki[1] + " => " + str(wiki[0])
-        if i != 4:
-            WTOP += '\n'
+    for (i, wiki) in zip(range(5), wikies): # 5 наиболее встречаемых статьей
+        WTOP += str(i + 1) + ". " + wiki[1] + " => " + str(wiki[0]) + '\n'
     # Проверка на пустоту
     if len(WTOP) == 0:
         WTOP = "Еще не была введена ни одна статья."
@@ -167,6 +165,7 @@ def save_content(user_id, user_name, url, NAME, TOP):
     if len(row) == 0:
         add_wiki(cur, conn, NAME)
     else:
+        # Обновляется количество статьей с заголовком NAME
         cur.execute(f'''UPDATE wiki
                         SET count={row[0][0] + 1}
                         WHERE name="{NAME}"''')
@@ -200,7 +199,7 @@ def top_words(TEXT):
         words.append((word[1], word[0]))
     words.sort()
     words.reverse()
-    for (i, word) in zip(range(5), words):
+    for (i, word) in zip(range(5), words): # 5 наиболее встречаемых слов
         TOP += str(i + 1) + ". " + str(word[1]) + " => " + str(word[0]) + "\n"
     # Проверка на пустоту
     if len(TOP) == 0:
