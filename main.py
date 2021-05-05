@@ -298,10 +298,10 @@ def callback_query(call):
     print_top(call)
 
 
-@bot.message_handler(commands=["start", "help", "LastTop", "LastWiki", "TopWiki"])
+@bot.message_handler(commands=["start", "help", "lasttop", "lastwiki", "topwiki"])
 def get_command(message):
     """
-    Обрабатываются команды /start, /help,  /LastTop, /LastWiki и /TopWiki.
+    Обрабатываются команды /start, /help,  /lasttop, /lastwiki и /topwiki.
     """
     if message.text == "/help" or message.text == "/start":
         mess = '''
@@ -321,10 +321,10 @@ _(Cсылка должна начинаться как https://en.wikipedia.org/
         cur = conn.cursor()
         check_user(cur, conn, message.from_user.id, message.from_user.first_name)
         conn.close()
-    elif message.text.lower() == "/lasttop":
+    elif message.text == "/lasttop":
         # Введено LastTop
         print_top(message)
-    elif message.text.lower() == "/lastwiki":
+    elif message.text == "/lastwiki":
         # Введено LastWiki
         conn = sqlite3.connect('database.db')
         cur = conn.cursor()
@@ -332,7 +332,7 @@ _(Cсылка должна начинаться как https://en.wikipedia.org/
 
         bot.send_message(message.from_user.id, NAME)
         conn.close()
-    elif message.text.lower() == "/topwiki":
+    elif message.text == "/topwiki":
         # Введено TopWiki
         conn = sqlite3.connect('database.db')
         cur = conn.cursor()
