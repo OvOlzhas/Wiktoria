@@ -306,13 +306,11 @@ def get_command(message):
     if message.text == "/help" or message.text == "/start":
         mess = '''
 Доступные тебе команды:    
-1. *GetText <Ссылка на статью из Википедию>* - Вывод текста из Википедии    
+1. *GetText <Ссылка на статью из Википедию>* - Вывод текста из английской Википедии    
 _(Cсылка должна начинаться как https://en.wikipedia.org/wiki/)_    
-2. *LastTop* or */LastTop* - Вывод пяти наиболее встречаемых слов     
-3. *LastWiki* or */LastWiki* - Вывод названия последнего текста      
-4. *TopWiki* or */TopWiki* - Вывод названии 5 наиболее запрашиваемых статьей      
-Эти команды не обязательно писать так, как написано выше.       
-Допустима команда на подобии: *lAsTwIkI*'''
+2. *LastTop* or */lasttop* - Вывод пяти наиболее встречаемых слов     
+3. *LastWiki* or */lastwiki* - Вывод названия последнего текста      
+4. *TopWiki* or */topwiki* - Вывод названии 5 наиболее запрашиваемых статьей'''
         if message.text == "/start":
             mess = f"Привет, {message.from_user.first_name}!     " + mess
         bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
