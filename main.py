@@ -6,6 +6,7 @@ import telebot
 
 from bs4 import BeautifulSoup
 
+
 bot = telebot.TeleBot('1694007852:AAH_S25nSS6Fo4ChnGaMVK5VSKZjiifr2eo')
 HOST = 'https://en.wikipedia.org/wiki/'
 HEADERS = {
@@ -17,28 +18,31 @@ trash = ['of', 'the', 'in', 'to', 'a', 'an', 'from', 'into', 'and', 'on',
 
 
 def get_html(url, message, params=''):
-    '''
+    """
     Возвращает html по url.
-    '''
+    """
     if not HOST in url:
         # Нет строки HOST в url
         bot.send_message(message.from_user.id, "Ссылка не корректна.")
         sys.exit()
     try:
         return requests.get(url, headers=HEADERS, params=params)
-    except:
+    except Exception:
         # Открытие сайта не увенчалось успехом
         bot.send_message(message.from_user.id, "Ссылка не корректна.")
         sys.exit()
 
 
-def get_content(html):
-    '''
+def get_content(html, message):
+    """
     Возвращает текст из Википедии(TEXT), а также заголовок(NAME).
-    '''
+    """
     TEXT = ""
     soup = BeautifulSoup(html, 'lxml')
     body = soup.find("div", class_="mw-parser-output")
+    if body == None:
+        bot.send_message(message.from_user.id, "Ссылка не корректна.")
+        sys.exit()
     NAME = soup.find("h1", id="firstHeading").get_text()
     texts_p = body.find_all('p')
     texts_span = body.find_all('span', class_="mw-headline")
@@ -50,13 +54,13 @@ def get_content(html):
     for text in body.find_all(['p', 'span']):
         if text in texts_p or text in texts_span:
             TEXT += text.get_text() + '\n'
-    return (NAME, TEXT)
+    return NAME, TEXT
 
 
 def create_table(cur, conn):
-    '''
+    """
     Создается бд с sqlite. При наличии - бд пересоздается.
-    '''
+    """
     # Опусташается бд
     cur.execute('DROP TABLE IF EXISTS user')
     cur.execute('DROP TABLE IF EXISTS wiki')
@@ -79,19 +83,19 @@ def create_table(cur, conn):
 
 
 def add_user(cur, conn, user_id, user_name):
-    '''
+    """
     Добавляется новый пользователь в таблицу user.
-    '''
+    """
     cur.execute(f'''INSERT INTO user (user_id, user_name, last_text_name, last_url, top) 
                     VALUES ('{user_id}', '{user_name}', '', '', '')''')
     conn.commit()
 
 
 def check_user(cur, conn, user_id, user_name):
-    '''
+    """
     Проверка на наличие пользователся в таблице user.
     При отсутствии добавляется.
-    '''
+    """
     cur.execute(f'''SELECT *
                     FROM user
                     WHERE user_id={user_id}''')
@@ -100,30 +104,31 @@ def check_user(cur, conn, user_id, user_name):
 
 
 def get_user_content(cur, conn, message):
-    '''
+    """
     Возвращаются last_text_name, last_url и top пользователья из таблицы user.
-    '''
+    """
     cur.execute(f'''SELECT last_text_name, last_url, top
                     FROM user
                     WHERE user_id={message.from_user.id}''')
     row = cur.fetchone()
     if not row:
-        return ('', '', '')
+        return '', '', ''
     return row
 
 
 def add_wiki(cur, conn, NAME):
-    '''
+    """
     Добавляется новая статья из Википедии в таблицу wiki.
-    '''
+    """
     cur.execute(f'''INSERT INTO wiki (name, count) 
                     VALUES ('{NAME}', '1')''')
     conn.commit()
 
+
 def get_top_wiki(cur, conn, message):
-    '''
+    """
     Возвращается 5 наибольее часто запрашиваемых статей из Википедии.
-    '''
+    """
     cur.execute(f'''SELECT count, name
                     FROM wiki''')
     WTOP = ""
@@ -136,13 +141,16 @@ def get_top_wiki(cur, conn, message):
         WTOP += str(i + 1) + ". " + wiki[1] + " => " + str(wiki[0])
         if i != 4:
             WTOP += '\n'
+    # Проверка на пустоту
+    if len(WTOP) == 0:
+        WTOP = "Еще не была введена ни одна статья."
     return WTOP
 
 
 def save_content(user_id, user_name, url, NAME, TOP):
-    '''
+    """
     Обновляется статья в таблице wiki, а также пользователь в user.
-    '''
+    """
     conn = sqlite3.connect('database.db')
     cur = conn.cursor()
     check_user(cur, conn, user_id, user_name)
@@ -167,10 +175,10 @@ def save_content(user_id, user_name, url, NAME, TOP):
 
 
 def top_words(TEXT):
-    '''
+    """
     Возвращается 5 наибольее часто встречающиеся слова, 
     кроме слов из trash.
-    '''
+    """
     global trash
 
     WORDS = {}
@@ -194,14 +202,17 @@ def top_words(TEXT):
     words.reverse()
     for (i, word) in zip(range(5), words):
         TOP += str(i + 1) + ". " + str(word[1]) + " => " + str(word[0]) + "\n"
+    # Проверка на пустоту
+    if len(TOP) == 0:
+        TOP = "Еще не была введена ни одна статья."
     return TOP
 
 
 def print_text(message, NAME, TEXT):
-    '''
+    """
     Отправляется сообщение с первым абзацем текста с кнопками
     "View all text" и "Top 5 words".
-    '''
+    """
     # Создание кнопок
     markup = telebot.types.InlineKeyboardMarkup()
     button1 = telebot.types.InlineKeyboardButton("View all text", callback_data="AllText")
@@ -217,7 +228,7 @@ def print_text(message, NAME, TEXT):
                 break
             continue
         first_text += TEXT[start]
-    
+
     # Удаляется первый абзац
     TEXT = TEXT[start:len(TEXT)]
     # Отправка первого абзаца
@@ -230,23 +241,24 @@ def print_text(message, NAME, TEXT):
 
 
 def print_top(message):
-    '''
+    """
     Отправляется сообщение с 5 наиболее встречаемыми словами.
-    '''
+    """
     conn = sqlite3.connect('database.db')
     cur = conn.cursor()
     (NAME, url, TOP) = get_user_content(cur, conn, message)
+    if len(TOP) == 0:
+        TOP = 'Еще не была введена ни одна статья.'
     bot.send_message(message.from_user.id, TOP)
     conn.close()
-    
 
 
 @bot.callback_query_handler(lambda q: q.data == 'AllText')
 def callback_query(call):
-    '''
+    """
     Нажата кнопка "View all text".
     Отправляются сообщения с текстом без первого абзаца.
-    '''
+    """
     conn = sqlite3.connect('database.db')
     cur = conn.cursor()
     (NAME, url, TOP) = get_user_content(cur, conn, call)
@@ -273,19 +285,19 @@ def callback_query(call):
 
 @bot.callback_query_handler(lambda q: q.data == 'TopWords')
 def callback_query(call):
-    '''
+    """
     Нажата кнопка "Top 5 words".
     Отправляется сообщение с 5 наиболее встречаемыми словами.
-    '''
+    """
     bot.answer_callback_query(call.id)
     print_top(call)
 
 
 @bot.message_handler(commands=["start", "help"])
 def get_command(message):
-    '''
+    """
     Обрабатываются команды /start и /help.
-    '''
+    """
     if message.text == "/help" or message.text == "/start":
         mess = '''
 Доступные тебе команды:    
@@ -294,7 +306,7 @@ _(Cсылка должна начинаться как https://en.wikipedia.org/
 2. *LastTop* - Вывод пяти наиболее встречаемых слов     
 3. *LastWiki* - Вывод названия последнего текста      
 4. *TopWiki* - Вывод названии, 5 наиболее запрашиваемых статьей'''
-        if (message.text == "/start"):
+        if message.text == "/start":
             mess = "Привет!     " + mess
         bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
         
@@ -306,14 +318,14 @@ _(Cсылка должна начинаться как https://en.wikipedia.org/
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
-    '''
+    """
     Ожидаются команды "GetText", "LastTop", "LastWiki" и "TopWiki".
-    '''
+    """
     words = message.text.split()
     if words[0].lower() == "gettext" and len(words) != 1:
         # Введено GetText с url
         html = get_html(words[1], message)
-        NAME, TEXT = get_content(html.text)
+        NAME, TEXT = get_content(html.text, message)
         TOP = top_words(TEXT)
         print_text(message, NAME, TEXT)
         save_content(message.from_user.id, message.from_user.first_name, words[1], NAME, TOP)
@@ -340,13 +352,14 @@ def get_text_messages(message):
 
 
 def start():
-    '''
+    """
     Создается таблица.
-    '''
+    """
     conn = sqlite3.connect('database.db')
     cur = conn.cursor()
     create_table(cur, conn)
     conn.close()
+
 
 start()
 
