@@ -86,6 +86,7 @@ def add_user(cur, conn, user_id, user_name):
                     VALUES ('{user_id}', '{user_name}', '', '', '')''')
     conn.commit()
 
+
 def check_user(cur, conn, user_id, user_name):
     '''
     Проверка на наличие пользователся в таблице user.
@@ -96,6 +97,7 @@ def check_user(cur, conn, user_id, user_name):
                     WHERE user_id={user_id}''')
     if len(cur.fetchall()) == 0:
         add_user(cur, conn, user_id, user_name)
+
 
 def get_user_content(cur, conn, message):
     '''
@@ -108,6 +110,7 @@ def get_user_content(cur, conn, message):
     if not row:
         return ('', '', '')
     return row
+
 
 def add_wiki(cur, conn, NAME):
     '''
@@ -127,7 +130,8 @@ def get_top_wiki(cur, conn, message):
     wikies = []
     for wiki in cur.fetchall():
         wikies.append(wiki)
-    reversed(sorted(wikies))
+    wikies.sort()
+    wikies.reverse()
     for (i, wiki) in zip(range(5), wikies):
         WTOP += str(i + 1) + ". " + wiki[1] + " => " + str(wiki[0])
         if i != 4:
@@ -186,10 +190,10 @@ def top_words(TEXT):
     # Берутся слова, которые встречаются наибольшее количество раз
     for word in WORDS.items():
         words.append((word[1], word[0]))
-    for (i, word) in zip(range(5), reversed(sorted(words))):
-        TOP += str(i + 1) + ". " + str(word[1]) + " => " + str(word[0])
-        if i != 4:
-            TOP += "\n"
+    words.sort()
+    words.reverse()
+    for (i, word) in zip(range(5), words):
+        TOP += str(i + 1) + ". " + str(word[1]) + " => " + str(word[0]) + "\n"
     return TOP
 
 
@@ -218,9 +222,11 @@ def print_text(message, NAME, TEXT):
     TEXT = TEXT[start:len(TEXT)]
     # Отправка первого абзаца
     if (len(TEXT) != 0):
-        bot.send_message(message.chat.id, "*" + NAME + "*\n\n" + first_text, reply_markup=markup, parse_mode='Markdown')
+        bot.send_message(message.chat.id, "*" + NAME + "*\n\n" + first_text, 
+        reply_markup=markup, parse_mode='Markdown')
     else:
-        bot.send_message(message.chat.id, "*" + NAME + "*\n\n" + first_text, parse_mode='Markdown')
+        bot.send_message(message.chat.id, "*" + NAME + "*\n\n" + first_text, 
+        parse_mode='Markdown')
 
 
 def print_top(message):
