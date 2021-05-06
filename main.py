@@ -267,7 +267,7 @@ def callback_alltext(call):
         conn.close()
         return
     NAME, TEXT = get_content(html.text, call)
-    if NAME is None or Text is None:
+    if NAME is None or TEXT is None:
         conn.close()
         return
 
