@@ -1,7 +1,6 @@
 import re
 import requests
 import sqlite3
-import sys
 import telebot
 
 from bs4 import BeautifulSoup
@@ -340,9 +339,10 @@ _(Cсылка должна начинаться как https://en.wikipedia.org/
         # Введено TopWiki
         bot.send_message(message.from_user.id, get_top_wiki(cur, conn))
     elif message.text == "/gettext":
-        bot.send_message(message.from_user.id, 'Введите, что Вы хотите найти на Википедии. *(На английском)*', parse_mode="Markdown")
+        bot.send_message(message.from_user.id, 'Введите, что Вы хотите найти на Википедии. *(На английском)*',
+                         parse_mode="Markdown")
         bot.register_next_step_handler(message, get_text)
-    conn.close()    
+    conn.close()
 
 
 def get_text(message):
