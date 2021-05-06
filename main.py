@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 
 bot = telebot.TeleBot('1694007852:AAH_S25nSS6Fo4ChnGaMVK5VSKZjiifr2eo')
-HOST = 'https://en.wikipedia.org/wiki/'
+HOST = 'https://en.wikipedia.org/'
 HEADERS = {
     'accept': f'{open("accept.txt").read()}',
     'user-agent': f'{open("useragent.txt").read()}'
@@ -23,14 +23,14 @@ def get_html(url, message, params=''):
     """
     if HOST not in url:
         # Нет строки HOST в url
-        bot.send_message(message.from_user.id, "Ссылка не корректна. /help")
-        sys.exit()
+        bot.send_message(message.from_user.id, "Ничего не найдено. /help")
+        return None
     try:
         return requests.get(url, headers=HEADERS, params=params)
     except Exception:
         # Открытие сайта не увенчалось успехом
-        bot.send_message(message.from_user.id, "Ссылка не корректна. /help")
-        sys.exit()
+        bot.send_message(message.from_user.id, "Ничего не найдено. /help")
+        return None
 
 
 def get_content(html, message):
@@ -42,7 +42,7 @@ def get_content(html, message):
     body = soup.find("div", class_="mw-parser-output")
     if body is None:  # Проверка на существование текста
         bot.send_message(message.from_user.id, "Ссылка не корректна. /help")
-        sys.exit()
+        return None, None
     NAME = soup.find("h1", id="firstHeading").get_text()  # Берется заголовок
     texts_p = body.find_all('p')
     texts_span = body.find_all('span', class_="mw-headline")
@@ -263,7 +263,13 @@ def callback_alltext(call):
     (NAME, url, TOP) = get_user_content(cur, conn, call.from_user.id)
 
     html = get_html(url, call)
+    if html is None:
+        conn.close()
+        return
     NAME, TEXT = get_content(html.text, call)
+    if NAME is None or Text is None:
+        conn.close()
+        return
 
     # Удаляется первый абзац
     ok = False
@@ -298,15 +304,18 @@ def callback_topwords(call):
     print_top(call)
 
 
-@bot.message_handler(commands=["start", "help", "lasttop", "lastwiki", "topwiki"])
+@bot.message_handler(commands=["start", "help", "lasttop", "lastwiki", "topwiki", "gettext"])
 def get_command(message):
     """
     Обрабатываются команды /start, /help,  /lasttop, /lastwiki и /topwiki.
     """
+    conn = sqlite3.connect('database.db')
+    cur = conn.cursor()
     if message.text == "/help" or message.text == "/start":
         mess = '''
 Доступные тебе команды:
-1. *GetText <Ссылка на статью из Википедию>* - Вывод текста из английской Википедии
+1. *GetText* or */gettext* - Вывод текста из английской Википедии.
+После команды должна последовать <Ссылка на статью из Википедии>.
 _(Cсылка должна начинаться как https://en.wikipedia.org/wiki/)_
 2. *LastTop* or */lasttop* - Вывод пяти наиболее встречаемых слов
 3. *LastWiki* or */lastwiki* - Вывод названия последнего текста
@@ -316,29 +325,36 @@ _(Cсылка должна начинаться как https://en.wikipedia.org/
             mess = f"Привет, {message.from_user.first_name}!     " + mess
         bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
 
-        conn = sqlite3.connect('database.db')
-        cur = conn.cursor()
         check_user(cur, conn, message.from_user.id, message.from_user.first_name)
-        conn.close()
     elif message.text == "/lasttop":
         # Введено LastTop
         print_top(message)
     elif message.text == "/lastwiki":
         # Введено LastWiki
-        conn = sqlite3.connect('database.db')
-        cur = conn.cursor()
         (NAME, url, TOP) = get_user_content(cur, conn, message.from_user.id)
 
         if len(NAME) == 0:
             NAME = "Еще не была введена ни одна статья."
         bot.send_message(message.from_user.id, NAME)
-        conn.close()
     elif message.text == "/topwiki":
         # Введено TopWiki
-        conn = sqlite3.connect('database.db')
-        cur = conn.cursor()
         bot.send_message(message.from_user.id, get_top_wiki(cur, conn))
-        conn.close()
+    elif message.text == "/gettext":
+        bot.send_message(message.from_user.id, 'Введите, что Вы хотите найти на Википедии. *(На английском)*', parse_mode="Markdown")
+        bot.register_next_step_handler(message, get_text)
+    conn.close()    
+
+
+def get_text(message):
+    html = get_html(HOST + '/w/index.php?search=' + message.text, message)
+    if html is None:
+        return
+    NAME, TEXT = get_content(html.text, message)
+    if NAME is None or TEXT is None:
+        return
+    TOP = top_words(TEXT)
+    print_text(message, NAME, TEXT)
+    save_content(message.from_user.id, message.from_user.first_name, HOST + '/w/index.php?search=' + message.text, NAME, TOP)
 
 
 @bot.message_handler(content_types=['text'])
@@ -347,14 +363,7 @@ def get_text_messages(message):
     Ожидаются команды "GetText", "LastTop", "LastWiki" и "TopWiki".
     """
     words = message.text.split()
-    if words[0].lower() == "gettext" and len(words) != 1:
-        # Введено GetText с url
-        html = get_html(words[1], message)
-        NAME, TEXT = get_content(html.text, message)
-        TOP = top_words(TEXT)
-        print_text(message, NAME, TEXT)
-        save_content(message.from_user.id, message.from_user.first_name, words[1], NAME, TOP)
-    elif words[0].lower() in ["lasttop", "lastwiki", "topwiki"]:
+    if words[0].lower() in ["gettext", "lasttop", "lastwiki", "topwiki"]:
         message.text = '/' + words[0].lower()
         get_command(message)
     else:
