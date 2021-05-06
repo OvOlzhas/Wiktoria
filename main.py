@@ -23,13 +23,13 @@ def get_html(url, message, params=''):
     """
     if not HOST in url:
         # Нет строки HOST в url
-        bot.send_message(message.from_user.id, "Ссылка не корректна.")
+        bot.send_message(message.from_user.id, "Ссылка не корректна. /help")
         sys.exit()
     try:
         return requests.get(url, headers=HEADERS, params=params)
     except Exception:
         # Открытие сайта не увенчалось успехом
-        bot.send_message(message.from_user.id, "Ссылка не корректна.")
+        bot.send_message(message.from_user.id, "Ссылка не корректна. /help")
         sys.exit()
 
 
@@ -41,7 +41,7 @@ def get_content(html, message):
     soup = BeautifulSoup(html, 'lxml')
     body = soup.find("div", class_="mw-parser-output")
     if body == None: # Проверка на существование текста
-        bot.send_message(message.from_user.id, "Ссылка не корректна.")
+        bot.send_message(message.from_user.id, "Ссылка не корректна. /help")
         sys.exit()
     NAME = soup.find("h1", id="firstHeading").get_text() # Берется заголовок
     texts_p = body.find_all('p')
@@ -103,13 +103,13 @@ def check_user(cur, conn, user_id, user_name):
         add_user(cur, conn, user_id, user_name)
 
 
-def get_user_content(cur, conn, message):
+def get_user_content(cur, conn, user_id):
     """
     Возвращаются last_text_name, last_url и top пользователья из таблицы user.
     """
     cur.execute(f'''SELECT last_text_name, last_url, top
                     FROM user
-                    WHERE user_id={message.from_user.id}''')
+                    WHERE user_id={user_id}''')
     row = cur.fetchone()
     if not row:
         return '', '', ''
@@ -125,7 +125,7 @@ def add_wiki(cur, conn, NAME):
     conn.commit()
 
 
-def get_top_wiki(cur, conn, message):
+def get_top_wiki(cur, conn):
     """
     Возвращается 5 наибольее часто запрашиваемых статей из Википедии.
     """
@@ -141,7 +141,7 @@ def get_top_wiki(cur, conn, message):
         WTOP += str(i + 1) + ". " + wiki[1] + " => " + str(wiki[0]) + '\n'
     # Проверка на пустоту
     if len(WTOP) == 0:
-        WTOP = "Еще не была введена ни одна статья."
+        WTOP = "Еще не была введена ни одна статья. /help"
     return WTOP
 
 
@@ -203,7 +203,7 @@ def top_words(TEXT):
         TOP += str(i + 1) + ". " + str(word[1]) + " => " + str(word[0]) + "\n"
     # Проверка на пустоту
     if len(TOP) == 0:
-        TOP = "Еще не была введена ни одна статья."
+        TOP = "Еще не была введена ни одна статья. /help"
     return TOP
 
 
@@ -245,9 +245,9 @@ def print_top(message):
     """
     conn = sqlite3.connect('database.db')
     cur = conn.cursor()
-    (NAME, url, TOP) = get_user_content(cur, conn, message)
+    (NAME, url, TOP) = get_user_content(cur, conn, message.from_user.id)
     if len(TOP) == 0:
-        TOP = 'Еще не была введена ни одна статья.'
+        TOP = 'Еще не была введена ни одна статья. /help'
     bot.send_message(message.from_user.id, TOP)
     conn.close()
 
@@ -260,7 +260,7 @@ def callback_query(call):
     """
     conn = sqlite3.connect('database.db')
     cur = conn.cursor()
-    (NAME, url, TOP) = get_user_content(cur, conn, call)
+    (NAME, url, TOP) = get_user_content(cur, conn, call.from_user.id)
     
     html = get_html(url, call)
     NAME, TEXT = get_content(html.text, call)
@@ -309,8 +309,9 @@ def get_command(message):
 1. *GetText <Ссылка на статью из Википедию>* - Вывод текста из английской Википедии    
 _(Cсылка должна начинаться как https://en.wikipedia.org/wiki/)_    
 2. *LastTop* or */lasttop* - Вывод пяти наиболее встречаемых слов     
-3. *LastWiki* or */lastwiki* - Вывод названия последнего текста      
-4. *TopWiki* or */topwiki* - Вывод названии 5 наиболее запрашиваемых статьей'''
+3. *LastWiki* or */lastwiki* - Вывод названия последнего текста       
+4. *TopWiki* or */topwiki* - Вывод названии 5 наиболее запрашиваемых статьей      
+5. /help - Вывод всех доступных команд'''
         if message.text == "/start":
             mess = f"Привет, {message.from_user.first_name}!     " + mess
         bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
@@ -326,7 +327,7 @@ _(Cсылка должна начинаться как https://en.wikipedia.org/
         # Введено LastWiki
         conn = sqlite3.connect('database.db')
         cur = conn.cursor()
-        (NAME, url, TOP) = get_user_content(cur, conn, message)
+        (NAME, url, TOP) = get_user_content(cur, conn, message.from_user.id)
 
         if len(NAME) == 0:
             NAME = "Еще не была введена ни одна статья."
@@ -336,7 +337,7 @@ _(Cсылка должна начинаться как https://en.wikipedia.org/
         # Введено TopWiki
         conn = sqlite3.connect('database.db')
         cur = conn.cursor()
-        bot.send_message(message.from_user.id, get_top_wiki(cur, conn, message))
+        bot.send_message(message.from_user.id, get_top_wiki(cur, conn))
         conn.close()
 
 
@@ -374,4 +375,5 @@ def start():
 start()
 
 # Бот работает бесконечно
-bot.polling(none_stop=True, interval=0)
+if __name__ == '__main__':
+    bot.polling(none_stop=True, interval=0)
