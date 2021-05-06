@@ -13,7 +13,8 @@ HEADERS = {
     'user-agent': f'{open("useragent.txt").read()}'
 }
 trash = ['of', 'the', 'in', 'to', 'a', 'an', 'from', 'into', 'and', 'on',
-         'at', 'for', 'as', 'by', 'is', 'are', '']
+         'at', 'for', 'as', 'by', 'is', 'are', 'he', 'she', 'it', 'they',
+         'we', 'their', 'i', '']
 
 
 def get_html(url, message, params=''):
@@ -314,8 +315,7 @@ def get_command(message):
         mess = '''
 Доступные тебе команды:
 1. *GetText* or */gettext* - Вывод текста из английской Википедии.
-После команды должна последовать <Ссылка на статью из Википедии>.
-_(Cсылка должна начинаться как https://en.wikipedia.org/wiki/)_
+После команды должно последовать сообщение с тем, что Вы ищете.
 2. *LastTop* or */lasttop* - Вывод пяти наиболее встречаемых слов
 3. *LastWiki* or */lastwiki* - Вывод названия последнего текста
 4. *TopWiki* or */topwiki* - Вывод названии 5 наиболее запрашиваемых статьей
