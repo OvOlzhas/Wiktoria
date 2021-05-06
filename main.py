@@ -61,13 +61,8 @@ def get_content(html, message):
 
 def create_table(cur, conn):
     """
-    Создается бд с sqlite. При наличии - бд пересоздается.
+    Создается бд с sqlite.
     """
-    # Опусташается бд
-    cur.execute('DROP TABLE IF EXISTS user')
-    cur.execute('DROP TABLE IF EXISTS wiki')
-
-    # Создается бд
     cur.execute('''
         CREATE TABLE user (
             user_id INTEGER,
