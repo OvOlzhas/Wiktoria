@@ -43,7 +43,7 @@ def get_content(html, message):
     soup = BeautifulSoup(html, 'lxml')
     body = soup.find("div", class_="mw-parser-output")
     if body is None:  # Проверка на существование текста
-        bot.send_message(message.from_user.id, "Ссылка не корректна. /help")
+        bot.send_message(message.from_user.id, "Ничего не найдено. /help")
         return None, None
     NAME = soup.find("h1", id="firstHeading").get_text()  # Берется заголовок
     texts_p = body.find_all('p')
