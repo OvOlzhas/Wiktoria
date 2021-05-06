@@ -14,7 +14,9 @@ HEADERS = {
 }
 trash = ['of', 'the', 'in', 'to', 'a', 'an', 'from', 'into', 'and', 'on',
          'at', 'for', 'as', 'by', 'is', 'are', 'he', 'she', 'it', 'they',
-         'we', 'their', 'i', '']
+         'we', 'their', 'i', 'that', 'was', 'were', 'be', 'not', 'as',
+         'or', 'and', 'do', 'with', 'why', 'where', 'what', 'how', 'him', 'her',
+         'his', 'us', 'own', 'who', 'when', 'whose', 'which', '']
 
 
 def get_html(url, message, params=''):
