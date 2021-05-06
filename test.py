@@ -30,7 +30,7 @@ class TestMain(unittest.TestCase):
         main.add_user(self.cur, self.conn, 123, 'Ippo')
         self.cur.execute('''SELECT user_id, user_name, last_text_name, last_url, top
                         FROM user''')
-        self.assertEqual(self.cur.fetchall(), [(123, 'Ippo', '', '', '')]) 
+        self.assertEqual(self.cur.fetchall(), [(123, 'Ippo', '', '', '')])
 
     def test_check_user(self):
         main.check_user(self.cur, self.conn, 123, 'Ippo')
@@ -39,7 +39,7 @@ class TestMain(unittest.TestCase):
         self.assertEqual(self.cur.fetchall(), [(123, 'Ippo', '', '', '')])
 
     def test_get_user_content(self):
-        main.check_user(self.cur, self.conn, 123, 'Ippo')    
+        main.check_user(self.cur, self.conn, 123, 'Ippo')
         self.assertEqual(main.get_user_content(self.cur, self.conn, 123), ('', '', ''))
 
     def test_add_wiki(self):

@@ -233,10 +233,10 @@ def print_text(message, NAME, TEXT):
     # Отправка первого абзаца
     if (len(TEXT) != 0):
         bot.send_message(message.chat.id, "*" + NAME + "*\n\n" + first_text,
-                        reply_markup=markup, parse_mode='Markdown')
+                         reply_markup=markup, parse_mode='Markdown')
     else:
         bot.send_message(message.chat.id, "*" + NAME + "*\n\n" + first_text,
-                        parse_mode='Markdown')
+                         parse_mode='Markdown')
 
 
 def print_top(message):
