@@ -21,7 +21,7 @@ def get_html(url, message, params=''):
     """
     Возвращает html по url.
     """
-    if not HOST in url:
+    if HOST not in url:
         # Нет строки HOST в url
         bot.send_message(message.from_user.id, "Ссылка не корректна. /help")
         sys.exit()
@@ -40,10 +40,10 @@ def get_content(html, message):
     TEXT = ""
     soup = BeautifulSoup(html, 'lxml')
     body = soup.find("div", class_="mw-parser-output")
-    if body == None: # Проверка на существование текста
+    if body is None:  # Проверка на существование текста
         bot.send_message(message.from_user.id, "Ссылка не корректна. /help")
         sys.exit()
-    NAME = soup.find("h1", id="firstHeading").get_text() # Берется заголовок
+    NAME = soup.find("h1", id="firstHeading").get_text()  # Берется заголовок
     texts_p = body.find_all('p')
     texts_span = body.find_all('span', class_="mw-headline")
     # Удаляются table из html
@@ -86,7 +86,7 @@ def add_user(cur, conn, user_id, user_name):
     """
     Добавляется новый пользователь в таблицу user.
     """
-    cur.execute(f'''INSERT INTO user (user_id, user_name, last_text_name, last_url, top) 
+    cur.execute(f'''INSERT INTO user (user_id, user_name, last_text_name, last_url, top)
                     VALUES ('{user_id}', '{user_name}', '', '', '')''')
     conn.commit()
 
@@ -120,7 +120,7 @@ def add_wiki(cur, conn, NAME):
     """
     Добавляется новая статья из Википедии в таблицу wiki.
     """
-    cur.execute(f'''INSERT INTO wiki (name, count) 
+    cur.execute(f'''INSERT INTO wiki (name, count)
                     VALUES ('{NAME}', '1')''')
     conn.commit()
 
@@ -129,15 +129,15 @@ def get_top_wiki(cur, conn):
     """
     Возвращается 5 наибольее часто запрашиваемых статей из Википедии.
     """
-    cur.execute(f'''SELECT count, name
+    cur.execute('''SELECT count, name
                     FROM wiki''')
     WTOP = ""
     wikies = []
-    for wiki in cur.fetchall(): # Берутся все статьи
+    for wiki in cur.fetchall():  # Берутся все статьи
         wikies.append(wiki)
     wikies.sort()
     wikies.reverse()
-    for (i, wiki) in zip(range(5), wikies): # 5 наиболее встречаемых статьей
+    for (i, wiki) in zip(range(5), wikies):  # 5 наиболее встречаемых статьей
         WTOP += str(i + 1) + ". " + wiki[1] + " => " + str(wiki[0]) + '\n'
     # Проверка на пустоту
     if len(WTOP) == 0:
@@ -153,7 +153,7 @@ def save_content(user_id, user_name, url, NAME, TOP):
     cur = conn.cursor()
     check_user(cur, conn, user_id, user_name)
     # Обновляется пользователь
-    cur.execute(f'''UPDATE user 
+    cur.execute(f'''UPDATE user
                     SET last_text_name="{NAME}", top="{TOP}", last_url="{url}"
                     WHERE user_id={user_id}''')
 
@@ -175,7 +175,7 @@ def save_content(user_id, user_name, url, NAME, TOP):
 
 def top_words(TEXT):
     """
-    Возвращается 5 наибольее часто встречающиеся слова, 
+    Возвращается 5 наибольее часто встречающиеся слова,
     кроме слов из trash.
     """
     global trash
@@ -199,7 +199,7 @@ def top_words(TEXT):
         words.append((word[1], word[0]))
     words.sort()
     words.reverse()
-    for (i, word) in zip(range(5), words): # 5 наиболее встречаемых слов
+    for (i, word) in zip(range(5), words):  # 5 наиболее встречаемых слов
         TOP += str(i + 1) + ". " + str(word[1]) + " => " + str(word[0]) + "\n"
     # Проверка на пустоту
     if len(TOP) == 0:
@@ -217,7 +217,7 @@ def print_text(message, NAME, TEXT):
     button1 = telebot.types.InlineKeyboardButton("View all text", callback_data="AllText")
     button2 = telebot.types.InlineKeyboardButton("Top 5 words", callback_data="TopWords")
     markup.row(button1, button2)
-    
+
     # Берется первый абзац
     start = 0
     first_text = ""
@@ -232,11 +232,11 @@ def print_text(message, NAME, TEXT):
     TEXT = TEXT[start:len(TEXT)]
     # Отправка первого абзаца
     if (len(TEXT) != 0):
-        bot.send_message(message.chat.id, "*" + NAME + "*\n\n" + first_text, 
-        reply_markup=markup, parse_mode='Markdown')
+        bot.send_message(message.chat.id, "*" + NAME + "*\n\n" + first_text,
+            reply_markup=markup, parse_mode='Markdown')
     else:
-        bot.send_message(message.chat.id, "*" + NAME + "*\n\n" + first_text, 
-        parse_mode='Markdown')
+        bot.send_message(message.chat.id, "*" + NAME + "*\n\n" + first_text,
+            parse_mode='Markdown')
 
 
 def print_top(message):
@@ -253,7 +253,7 @@ def print_top(message):
 
 
 @bot.callback_query_handler(lambda q: q.data == 'AllText')
-def callback_query(call):
+def callback_alltext(call):
     """
     Нажата кнопка "View all text".
     Отправляются сообщения с текстом без первого абзаца.
@@ -261,10 +261,10 @@ def callback_query(call):
     conn = sqlite3.connect('database.db')
     cur = conn.cursor()
     (NAME, url, TOP) = get_user_content(cur, conn, call.from_user.id)
-    
+
     html = get_html(url, call)
     NAME, TEXT = get_content(html.text, call)
-    
+
     # Удаляется первый абзац
     ok = False
     for start in range(0, len(TEXT)):
@@ -277,7 +277,7 @@ def callback_query(call):
 
     # Отправка текста без первого абзаца
     bot.answer_callback_query(call.id)
-    for x in range(0, len(TEXT), 4096): # 4096 - макс. количество символов в одном сообщение
+    for x in range(0, len(TEXT), 4096):  # 4096 - макс. количество символов в одном сообщение
         if x + 4096 >= len(TEXT):
             markup = telebot.types.InlineKeyboardMarkup()
             button = telebot.types.InlineKeyboardButton("Top 5 words", callback_data="TopWords")
@@ -289,7 +289,7 @@ def callback_query(call):
 
 
 @bot.callback_query_handler(lambda q: q.data == 'TopWords')
-def callback_query(call):
+def callback_topwords(call):
     """
     Нажата кнопка "Top 5 words".
     Отправляется сообщение с 5 наиболее встречаемыми словами.
@@ -305,17 +305,17 @@ def get_command(message):
     """
     if message.text == "/help" or message.text == "/start":
         mess = '''
-Доступные тебе команды:    
-1. *GetText <Ссылка на статью из Википедию>* - Вывод текста из английской Википедии    
-_(Cсылка должна начинаться как https://en.wikipedia.org/wiki/)_    
-2. *LastTop* or */lasttop* - Вывод пяти наиболее встречаемых слов     
-3. *LastWiki* or */lastwiki* - Вывод названия последнего текста       
-4. *TopWiki* or */topwiki* - Вывод названии 5 наиболее запрашиваемых статьей      
+Доступные тебе команды:
+1. *GetText <Ссылка на статью из Википедию>* - Вывод текста из английской Википедии
+_(Cсылка должна начинаться как https://en.wikipedia.org/wiki/)_
+2. *LastTop* or */lasttop* - Вывод пяти наиболее встречаемых слов
+3. *LastWiki* or */lastwiki* - Вывод названия последнего текста
+4. *TopWiki* or */topwiki* - Вывод названии 5 наиболее запрашиваемых статьей
 5. /help - Вывод всех доступных команд'''
         if message.text == "/start":
             mess = f"Привет, {message.from_user.first_name}!     " + mess
         bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
-        
+
         conn = sqlite3.connect('database.db')
         cur = conn.cursor()
         check_user(cur, conn, message.from_user.id, message.from_user.first_name)
