@@ -58,10 +58,18 @@ def get_content(html, message):
             TEXT += text.get_text() + '\n'
     return NAME, TEXT
 
+def delete_table(cur, conn):
+    """
+    Удаляется бд с sqlite.
+    """
+    cur.execute('DROP TABLE IF EXISTS user')
+    cur.execute('DROP TABLE IF EXISTS wiki')
+    conn.commit()
+
 
 def create_table(cur, conn):
     """
-    Создается бд с sqlite.
+    Создается бд с sqlite. При наличии - бд пересоздается.
     """
     cur.execute('''
         CREATE TABLE user (

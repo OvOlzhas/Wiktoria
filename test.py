@@ -10,6 +10,7 @@ class TestMain(unittest.TestCase):
         main.create_table(self.cur, self.conn)
 
     def tearDown(self):
+        main.delete_table(self.cur, self.conn)
         self.conn.close()
 
     def test_get_content(self):
@@ -69,4 +70,5 @@ class TestMain(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    main.delete_table(self.cur, self.conn)
     unittest.main()
