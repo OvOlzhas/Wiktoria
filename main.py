@@ -58,6 +58,7 @@ def get_content(html, message):
             TEXT += text.get_text() + '\n'
     return NAME, TEXT
 
+
 def delete_table(cur, conn):
     """
     Удаляется бд с sqlite.
