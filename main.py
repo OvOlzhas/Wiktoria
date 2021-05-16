@@ -6,7 +6,8 @@ import telebot
 from bs4 import BeautifulSoup
 
 
-bot = telebot.TeleBot('1694007852:AAH_S25nSS6Fo4ChnGaMVK5VSKZjiifr2eo')
+token = os.getenv('token')
+bot = telebot.TeleBot(token)
 HOST = 'https://en.wikipedia.org/'
 HEADERS = {
     'accept': f'{open("accept.txt").read()}',
