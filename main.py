@@ -196,7 +196,7 @@ def top_words(TEXT):
             if ord('a') > ord(c) or ord(c) > ord('z'):
                 word = re.sub(f'[{c}]', '', word)
         # Проверка на содержании в trash
-        if not word.lower() in trash:
+        if not word.lower() in trash and word != '':
             # Добавляется слово
             WORDS[word.lower()] = WORDS.get(word, 0) + 1
     words = []
