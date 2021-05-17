@@ -6,6 +6,7 @@ import sqlite3
 import telebot
 
 from bs4 import BeautifulSoup
+from nltk.corpus import stopwords
 
 
 nltk.download('stopwords')
