@@ -1,3 +1,4 @@
+import nltk
 import os
 import re
 import requests
