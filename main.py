@@ -400,11 +400,11 @@ def get_text_messages(message):
         if (message.text == '/gettext'):
             get_command_gettext(message)
         elif (message.text == '/lasttop'):
-            get_command_gettext(message)
+            get_command_lasttop(message)
         elif (message.text == '/lastwiki'):
-            get_command_gettext(message)
+            get_command_lastwiki(message)
         elif (message.text == '/topwiki'):
-            get_command_gettext(message)
+            get_command_topwiki(message)
     else:
         # Неизвестная команда
         bot.send_message(message.from_user.id, "Я тебя не понимаю. Напиши /help.")
