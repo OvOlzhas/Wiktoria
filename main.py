@@ -6,9 +6,9 @@ import sqlite3
 import telebot
 
 from bs4 import BeautifulSoup
-from nltk.corpus import stopwords
 
 
+nltk.download('stopwords')
 token = os.getenv('token')
 bot = telebot.TeleBot(token)
 HOST = 'https://en.wikipedia.org/'
