@@ -145,7 +145,7 @@ def get_top_wiki(cur, conn):
         wikies.append(wiki)
     wikies.sort()
     wikies.reverse()
-    for (i, wiki) in zip(range(5), wikies):  # 5 наиболее встречаемых статьей
+    for i, wiki in zip(range(5), wikies):  # 5 наиболее встречаемых статьей
         WTOP += str(i + 1) + ". " + wiki[1] + " => " + str(wiki[0]) + '\n'
     # Проверка на пустоту
     if len(WTOP) == 0:
@@ -207,7 +207,7 @@ def top_words(TEXT):
         words.append((word[1], word[0]))
     words.sort()
     words.reverse()
-    for (i, word) in zip(range(5), words):  # 5 наиболее встречаемых слов
+    for i, word in zip(range(5), words):  # 5 наиболее встречаемых слов
         TOP += str(i + 1) + ". " + str(word[1]) + " => " + str(word[0]) + "\n"
     # Проверка на пустоту
     if len(TOP) == 0:
@@ -253,7 +253,7 @@ def print_top(message):
     """
     conn = sqlite3.connect('database.db')
     cur = conn.cursor()
-    (NAME, url, TOP) = get_user_content(cur, conn, message.from_user.id)
+    NAME, url, TOP = get_user_content(cur, conn, message.from_user.id)
     if len(TOP) == 0:
         TOP = 'Еще не была введена ни одна статья. /help'
     bot.send_message(message.from_user.id, TOP)
@@ -312,15 +312,14 @@ def callback_topwords(call):
     print_top(call)
 
 
-@bot.message_handler(commands=["start", "help", "lasttop", "lastwiki", "topwiki", "gettext"])
-def get_command(message):
+@bot.message_handler(commands=["start", "help"])
+def get_command_start_help(message):
     """
-    Обрабатываются команды /start, /help,  /lasttop, /lastwiki и /topwiki.
+    Обрабатываются команды /start и /help.
     """
     conn = sqlite3.connect('database.db')
     cur = conn.cursor()
-    if message.text == "/help" or message.text == "/start":
-        mess = '''
+    mess = '''
 Доступные тебе команды:
 1. *GetText* or */gettext* - Вывод текста из английской Википедии.
 После команды должно последовать сообщение с тем, что Вы ищете.
@@ -328,29 +327,54 @@ def get_command(message):
 3. *LastWiki* or */lastwiki* - Вывод названия последнего текста
 4. *TopWiki* or */topwiki* - Вывод названии 5 наиболее запрашиваемых статьей
 5. /help - Вывод всех доступных команд'''
-        if message.text == "/start":
-            mess = f"Привет, {message.from_user.first_name}!     " + mess
-        bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
-
-        check_user(cur, conn, message.from_user.id, message.from_user.first_name)
-    elif message.text == "/lasttop":
-        # Введено LastTop
-        print_top(message)
-    elif message.text == "/lastwiki":
-        # Введено LastWiki
-        (NAME, url, TOP) = get_user_content(cur, conn, message.from_user.id)
-
-        if len(NAME) == 0:
-            NAME = "Еще не была введена ни одна статья."
-        bot.send_message(message.from_user.id, NAME)
-    elif message.text == "/topwiki":
-        # Введено TopWiki
-        bot.send_message(message.from_user.id, get_top_wiki(cur, conn))
-    elif message.text == "/gettext":
-        bot.send_message(message.from_user.id, 'Введите, что Вы хотите найти на Википедии. *(На английском)*',
-                         parse_mode="Markdown")
-        bot.register_next_step_handler(message, get_text)
+    if message.text == "/start":
+        mess = f"Привет, {message.from_user.first_name}!     " + mess
+    bot.send_message(message.from_user.id, mess, parse_mode="Markdown")
+    check_user(cur, conn, message.from_user.id, message.from_user.first_name)
     conn.close()
+
+
+@bot.message_handler(commands=["lasttop"])
+def get_command_lasttop(message):
+    """
+    Обрабатываятся команда lasttop.
+    """
+    print_top(message)
+
+
+@bot.message_handler(commands=["lastwiki"])
+def get_command_lastwiki(message):
+    """
+    Обрабатываятся команда lastwiki.
+    """
+    conn = sqlite3.connect('database.db')
+    cur = conn.cursor()
+    NAME = get_user_content(cur, conn, message.from_user.id)[0]
+    if len(NAME) == 0:
+        NAME = "Еще не была введена ни одна статья."
+    bot.send_message(message.from_user.id, NAME)
+    conn.close()
+
+
+@bot.message_handler(commands=["topwiki"])
+def get_command_topwiki(message):
+    """
+    Обрабатываятся команда topwiki.
+    """
+    conn = sqlite3.connect('database.db')
+    cur = conn.cursor()
+    bot.send_message(message.from_user.id, get_top_wiki(cur, conn))
+    conn.close()
+
+
+@bot.message_handler(commands=["gettext"])
+def get_command_gettext(message):
+    """
+    Обрабатываятся команда gettext.
+    """
+    bot.send_message(message.from_user.id, 'Введите, что Вы хотите найти на Википедии. *(На английском)*',
+                     parse_mode="Markdown")
+    bot.register_next_step_handler(message, get_text)
 
 
 def get_text(message):
@@ -373,7 +397,14 @@ def get_text_messages(message):
     words = message.text.split()
     if words[0].lower() in ["gettext", "lasttop", "lastwiki", "topwiki"]:
         message.text = '/' + words[0].lower()
-        get_command(message)
+        if (message.text == '/gettext'):
+            get_command_gettext(message)
+        elif (message.text == '/lasttop'):
+            get_command_gettext(message)
+        elif (message.text == '/lastwiki'):
+            get_command_gettext(message)
+        elif (message.text == '/topwiki'):
+            get_command_gettext(message)
     else:
         # Неизвестная команда
         bot.send_message(message.from_user.id, "Я тебя не понимаю. Напиши /help.")
