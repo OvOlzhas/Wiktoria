@@ -17,7 +17,7 @@ HEADERS = {
     'accept': f'{open("accept.txt").read()}',
     'user-agent': f'{open("useragent.txt").read()}'
 }
-trash = set(stopwords.words('english')) 
+trash = set(stopwords.words('english'))
 
 
 def get_html(url, message, params=''):
