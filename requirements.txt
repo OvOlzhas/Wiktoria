@@ -3,3 +3,4 @@ lxml==4.6.3
 requests==2.25.1
 db-sqlite3==0.0.1
 pyTelegramBotAPI==3.7.7
+nltk==3.6.2
